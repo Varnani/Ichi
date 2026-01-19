@@ -5,6 +5,8 @@
 #include <rgfw.hpp>
 
 #include "Platform.hpp"
+#include "include/Pixel.hpp"
+#include "include/Renderer.hpp"
 
 static void KeyCallback(RGFW_window* window, RGFW_key key, u8 keyChar, RGFW_keymod keyMod, RGFW_bool repeat, RGFW_bool pressed)
 {
@@ -19,16 +21,10 @@ static void MouseCallback(RGFW_window* window, RGFW_mouseButton button, RGFW_boo
     std::printf("You clicked at x: %d, y: %d\n", mouseX, mouseY);
 }
 
-static RGFW_surface* UpdateSurface(RGFW_window* window)
+static RGFW_surface* GetSurface(RGFW_monitor* monitor, int width, int height)
 {
     static std::vector<uint32_t> buffer{};
-    static RGFW_monitor* monitor = RGFW_window_getMonitor(window);
     static RGFW_surface* surface = nullptr;
-
-    if (monitor == nullptr) throw std::exception{ "can't query monitor!" };
-
-    int width, height;
-    RGFW_window_getSize(window, &width, &height);
 
     int surfaceWidth = monitor->pixelRatio * width;
     int surfaceHeight = monitor->pixelRatio * height;
@@ -42,7 +38,7 @@ static RGFW_surface* UpdateSurface(RGFW_window* window)
     std::printf("surface resized, w: %d, h: %d\n", surfaceWidth, surfaceHeight);
 
     buffer.resize(surfaceWidth * surfaceHeight);
-    uint8_t* bufferPtr = reinterpret_cast<uint8_t*>(buffer.data());
+    u8* bufferPtr = reinterpret_cast<u8*>(buffer.data());
     surface = RGFW_createSurface(bufferPtr, surfaceWidth, surfaceHeight, RGFW_formatRGBA8);
 
     return surface;
@@ -53,35 +49,30 @@ int AppEntry()
     RGFW_setKeyCallback(KeyCallback);
     RGFW_setMouseButtonCallback(MouseCallback);
 
-    RGFW_window* window = RGFW_createWindow("Ichi", 0, 0, 1280, 960, RGFW_windowCenter | RGFW_windowFocusOnShow);
-    RGFW_surface* surface = UpdateSurface(window);
+    int width = 1280;
+    int height = 960;
+
+    RGFW_window* window = RGFW_createWindow("Ichi", 0, 0, width, height, RGFW_windowCenter | RGFW_windowFocusOnShow);
+    RGFW_monitor* monitor = RGFW_window_getMonitor(window);
+    RGFW_surface* surface = nullptr;
+
+    if (monitor == nullptr) throw std::exception{ "can't query monitor!" };
+
+    Renderer renderer{};
 
     while (RGFW_window_shouldClose(window) == RGFW_FALSE)
     {
         RGFW_pollEvents();
+        RGFW_window_getSize(window, &width, &height);
 
-        surface = UpdateSurface(window);
+        surface = GetSurface(monitor, width, height);
 
-        /*for (uint32_t x = 0; x < 640; x++)
-        {
-            for (uint32_t y = 0; y < 480; y++)
-            {
-                float fx = float(x);
-                float fy = float(y);
+        renderer.Resize(width, height);
+        renderer.Clear(Pixel::Red);
+        renderer.DrawRect({ 100, 100 }, { 250, 250 }, Pixel::Blue);
+        renderer.Present(surface->data, surface->w, surface->h);
 
-                uint8_t r = (uint32_t)((fx / 640) * 255);
-                uint8_t g = (uint32_t)((fy / 480) * 255);
-                uint8_t b = 0;
-                uint8_t a = 255;
-
-                uint32_t pixel = r + (g << 8) + (b << 16) + (a << 24);
-
-                size_t index = (x + (y * 640));
-                buffer[index] = pixel;
-            }
-        }
-
-        RGFW_window_blitSurface(window, s_surface);*/
+        RGFW_window_blitSurface(window, surface);
     }
 
     if (surface != nullptr) RGFW_surface_free(surface);
