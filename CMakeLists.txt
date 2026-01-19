@@ -6,11 +6,17 @@ project(Ichi VERSION 0.1.0 LANGUAGES CXX)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# glob up project sources
+file(GLOB ichi_sources CONFIGURE_DEPENDS
+    ${CMAKE_SOURCE_DIR}/ichi/source/*.cpp
+)
+
 add_executable(${CMAKE_PROJECT_NAME} WIN32 MACOSX_BUNDLE)
-target_sources(${CMAKE_PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/src/main.cpp)
+target_sources(${CMAKE_PROJECT_NAME} PUBLIC "ichi/Main.cpp")
+target_sources(${CMAKE_PROJECT_NAME} PUBLIC ${ichi_sources})
 
 if(WIN32)
-target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE PLATFORM_WIN32)
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE PLATFORM_WINDOWS)
 elseif(APPLE)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE PLATFORM_APPLE)
 elseif(UNIX)
