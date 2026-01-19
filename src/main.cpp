@@ -4,6 +4,21 @@
 #include <glm/glm.hpp>
 #include <rgfw.hpp>
 
+int AppEntry();
+
+#ifdef PLATFORM_WIN32
+#include <windows.h>
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+{
+    return AppEntry();
+}
+#else
+int main()
+{
+    return AppEntry();
+}
+#endif
+
 void keyfunc(RGFW_window* win, RGFW_key key, u8 keyChar, RGFW_keymod keyMod, RGFW_bool repeat, RGFW_bool pressed)
 {
     RGFW_UNUSED(repeat);
@@ -13,7 +28,7 @@ void keyfunc(RGFW_window* win, RGFW_key key, u8 keyChar, RGFW_keymod keyMod, RGF
     }
 }
 
-int main()
+int AppEntry()
 {
     RGFW_setKeyCallback(keyfunc);
 
@@ -27,8 +42,8 @@ int main()
     }
 
     // we need our surface to be much larger than window
-    int surfaceWidth = monitor->pixelRatio * monitor->mode.w * 2;
-    int surfaceHeight = monitor->pixelRatio * monitor->mode.h * 2;
+    int surfaceWidth = monitor->pixelRatio * monitor->mode.w;
+    int surfaceHeight = monitor->pixelRatio * monitor->mode.h;
 
     std::vector<uint32_t> buffer{};
     buffer.resize(surfaceWidth * surfaceHeight);
@@ -59,11 +74,10 @@ int main()
                     float fx = float(x);
                     float fy = float(y);
 
-
-                    uint32_t r = (uint32_t)((fx / 640) * 255);
-                    uint32_t g = (uint32_t)((fy / 480) * 255);
-                    uint32_t b = 0;
-                    uint32_t a = 255;
+                    uint8_t r = (uint32_t)((fx / 640) * 255);
+                    uint8_t g = (uint32_t)((fy / 480) * 255);
+                    uint8_t b = 0;
+                    uint8_t a = 255;
 
                     uint32_t pixel = r + (g << 8) + (b << 16) + (a << 24);
 
@@ -78,4 +92,6 @@ int main()
 
     RGFW_surface_free(surface);
     RGFW_window_close(window);
+
+    return 0;
 }

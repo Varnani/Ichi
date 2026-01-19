@@ -9,6 +9,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_executable(${CMAKE_PROJECT_NAME} WIN32 MACOSX_BUNDLE)
 target_sources(${CMAKE_PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/src/main.cpp)
 
+if(WIN32)
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE PLATFORM_WIN32)
+elseif(APPLE)
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE PLATFORM_APPLE)
+elseif(UNIX)
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE PLATFORM_UNIX)
+endif()
+
 # rgfw
 add_subdirectory(${CMAKE_SOURCE_DIR}/vendor/rgfw/)
 target_link_libraries(${CMAKE_PROJECT_NAME} rgfw)

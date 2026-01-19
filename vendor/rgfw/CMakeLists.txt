@@ -9,8 +9,11 @@ add_library(rgfw STATIC)
 
 target_sources(rgfw PRIVATE "rgfw_impl.cpp")
 target_include_directories(rgfw INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
+if(APPLE)
 target_link_libraries(rgfw INTERFACE
     "-framework Cocoa"
     "-framework IOKit"
     "-framework CoreFoundation"
     "-framework QuartzCore")
+endif()
