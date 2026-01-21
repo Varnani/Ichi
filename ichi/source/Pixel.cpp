@@ -1,4 +1,5 @@
 #include "../include/Pixel.hpp"
+#include <bit>
 
 const Pixel Pixel::Red{ 255, 0, 0, 255 };
 const Pixel Pixel::Green{ 0, 255, 0, 255 };
@@ -9,20 +10,18 @@ const Pixel Pixel::Black{ 0, 0, 0, 255 };
 
 Pixel Pixel::FromUInt32(uint32_t source)
 {
-    Pixel pixel{};
-
-    uint32_t* ptr = reinterpret_cast<uint32_t*>(&pixel);
-    *ptr = source;
-
+    Pixel pixel = std::bit_cast<Pixel>(source);
     return pixel;
 }
 
 uint32_t Pixel::ToUInt32(Pixel pixel)
 {
-    uint32_t num = 0;
-
-    uint32_t* ptr = reinterpret_cast<uint32_t*>(&pixel);
-    num = *ptr;
-
+    uint32_t num = std::bit_cast<uint32_t>(pixel);
     return num;
+}
+
+Pixel Pixel::Blend(Pixel src, Pixel dst, uint8_t a)
+{
+    if (a == 0) return dst;
+    return src;
 }

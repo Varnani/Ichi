@@ -5,11 +5,7 @@
 
 #include "../include/Pixel.hpp"
 #include "../include/Renderer.hpp"
-
-size_t CalculateIndex(size_t x, size_t y, uint32_t width)
-{
-    return x + (y * width);
-}
+#include "../include/Sprite.hpp"
 
 void Renderer::Resize(uint32_t w, uint32_t h)
 {
@@ -39,8 +35,30 @@ void Renderer::DrawRect(glm::vec2 position, glm::vec2 size, Pixel color)
         {
             if (y >= height) continue;
 
-            size_t index = CalculateIndex(x, y, width);
+            size_t index = x + (y * width);
             m_buffer[index] = color;
+        }
+    }
+}
+
+void Renderer::DrawSprite(glm::uvec2 position, Sprite& sprite)
+{
+    for (uint32_t spriteX = 0; spriteX < sprite.width; spriteX++)
+    {
+        uint32_t bufX = spriteX + position.x;
+        if (bufX >= width) continue;
+
+        for (uint32_t spriteY = 0; spriteY < sprite.height; spriteY++)
+        {
+            uint32_t bufY = spriteY + position.y;
+            if (bufY >= height) continue;
+
+            size_t index = bufX + (bufY * width);
+
+            Pixel spritePixel = sprite.GetPixel(spriteX, spriteY);
+            Pixel targetPixel = m_buffer[index];
+
+            m_buffer[index] = Pixel::Blend(spritePixel, targetPixel, spritePixel.a);
         }
     }
 }

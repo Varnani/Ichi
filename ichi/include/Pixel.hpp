@@ -1,5 +1,7 @@
 #pragma once
+
 #include <cstdint>
+#include <type_traits>
 
 struct Pixel
 {
@@ -10,6 +12,7 @@ struct Pixel
 
     static Pixel FromUInt32(uint32_t source);
     static uint32_t ToUInt32(Pixel pixel);
+    static Pixel Blend(Pixel src, Pixel dst, uint8_t a);
 
     static const Pixel Red;
     static const Pixel Green;
@@ -18,3 +21,10 @@ struct Pixel
     static const Pixel White;
     static const Pixel Black;
 };
+
+namespace Pixel_Asserts
+{
+    static_assert(sizeof(Pixel) == 4, "sizeof(Pixel) should be 4.");
+    static_assert(std::is_trivially_copyable_v<Pixel>, "Pixel should be trivially copyable.");
+    static_assert(std::is_standard_layout_v<Pixel>, "Pixel should have standard layout.");
+} // namespace Pixel_Asserts

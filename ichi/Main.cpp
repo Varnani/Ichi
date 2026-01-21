@@ -5,12 +5,22 @@
 #include <rgfw.hpp>
 
 #include "Platform.hpp"
+#include "include/Image.hpp"
 #include "include/Pixel.hpp"
 #include "include/Renderer.hpp"
 
+glm::uvec2 spritePos{ 0, 0 };
+
 static void KeyCallback(RGFW_window* window, RGFW_key key, u8 keyChar, RGFW_keymod keyMod, RGFW_bool repeat, RGFW_bool pressed)
 {
-    if (key == RGFW_escape && pressed) RGFW_window_setShouldClose(window, 1);
+    if (pressed == RGFW_FALSE) return;
+
+    if (key == RGFW_escape) RGFW_window_setShouldClose(window, 1);
+
+    if (key == RGFW_up) spritePos.y += 32;
+    if (key == RGFW_down) spritePos.y -= 32;
+    if (key == RGFW_right) spritePos.x += 32;
+    if (key == RGFW_left) spritePos.x -= 32;
 }
 
 static void MouseCallback(RGFW_window* window, RGFW_mouseButton button, RGFW_bool pressed)
@@ -58,6 +68,17 @@ int AppEntry()
 
     if (monitor == nullptr) throw std::exception{ "can't query monitor!" };
 
+    Image ichiSheet{};
+    ichiSheet.Load("C:\\Users\\ozang\\source\\repos\\Ichi\\res\\ichi-idle.png");
+
+    Sprite ichiFrame{};
+
+    ichiFrame.image = &ichiSheet;
+    ichiFrame.startX = 0;
+    ichiFrame.startY = 0;
+    ichiFrame.width = 16;
+    ichiFrame.height = 32;
+
     Renderer renderer{};
 
     while (RGFW_window_shouldClose(window) == RGFW_FALSE)
@@ -68,8 +89,8 @@ int AppEntry()
         surface = GetSurface(monitor, width, height);
 
         renderer.Resize(width, height);
-        renderer.Clear(Pixel::Red);
-        renderer.DrawRect({ 100, 100 }, { 250, 250 }, Pixel::Blue);
+        renderer.Clear(Pixel::Black);
+        renderer.DrawSprite(spritePos, ichiFrame);
         renderer.Present(surface->data, surface->w, surface->h);
 
         RGFW_window_blitSurface(window, surface);
