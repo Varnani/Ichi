@@ -19,9 +19,3 @@ uint32_t Pixel::ToUInt32(Pixel pixel)
     uint32_t num = std::bit_cast<uint32_t>(pixel);
     return num;
 }
-
-Pixel Pixel::Blend(Pixel src, Pixel dst, uint8_t a)
-{
-    if (a == 0) return dst;
-    return src;
-}

@@ -18,7 +18,7 @@ void Image::Load(std::string path)
     stbi_image_free(dataPtr);
 }
 
-Pixel Image::GetPixel(uint32_t x, uint32_t y)
+Pixel Image::GetPixel(const uint32_t x, const uint32_t y) const
 {
     return pixels[x + (y * size.x)];
 }

@@ -13,11 +13,11 @@ public:
     uint32_t width;
     uint32_t height;
 
-    void Resize(uint32_t width, uint32_t height);
-    void Clear(Pixel color);
-    void DrawRect(glm::vec2 position, glm::vec2 size, Pixel color);
-    void DrawSprite(glm::uvec2 position, Sprite& sprite);
-    void Present(uint8_t* target, uint32_t targetWidth, uint32_t targetHeight);
+    void Resize(const uint32_t width, const uint32_t height);
+    void Clear(const Pixel color);
+    void DrawRect(const glm::vec2 position, const glm::vec2 size, const Pixel color);
+    void DrawSprite(const glm::uvec2 position, const Sprite& sprite);
+    void Present(uint8_t* target, const uint32_t targetWidth, const uint32_t targetHeight);
 
 private:
     std::vector<Pixel> m_buffer{};

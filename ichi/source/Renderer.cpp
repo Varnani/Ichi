@@ -7,7 +7,7 @@
 #include "../include/Renderer.hpp"
 #include "../include/Sprite.hpp"
 
-void Renderer::Resize(uint32_t w, uint32_t h)
+void Renderer::Resize(const uint32_t w, const uint32_t h)
 {
     if (w == width && h == height) return;
 
@@ -17,15 +17,20 @@ void Renderer::Resize(uint32_t w, uint32_t h)
     m_buffer.resize(width * height);
 }
 
-void Renderer::Clear(Pixel color)
+void Renderer::Clear(const Pixel color)
 {
-    for (size_t i = 0; i < m_buffer.size(); i++)
+    size_t count = m_buffer.size();
+    Pixel* ptr = m_buffer.data();
+
+    while (count > 0)
     {
-        m_buffer[i] = color;
+        *ptr = color;
+        ptr++;
+        count--;
     }
 }
 
-void Renderer::DrawRect(glm::vec2 position, glm::vec2 size, Pixel color)
+void Renderer::DrawRect(const glm::vec2 position, const glm::vec2 size, const Pixel color)
 {
     for (size_t x = position.x; x < position.x + size.x; x++)
     {
@@ -41,7 +46,7 @@ void Renderer::DrawRect(glm::vec2 position, glm::vec2 size, Pixel color)
     }
 }
 
-void Renderer::DrawSprite(glm::uvec2 position, Sprite& sprite)
+void Renderer::DrawSprite(const glm::uvec2 position, const Sprite& sprite)
 {
     for (uint32_t spriteX = 0; spriteX < sprite.width; spriteX++)
     {
@@ -56,14 +61,12 @@ void Renderer::DrawSprite(glm::uvec2 position, Sprite& sprite)
             size_t index = bufX + (bufY * width);
 
             Pixel spritePixel = sprite.GetPixel(spriteX, spriteY);
-            Pixel targetPixel = m_buffer[index];
-
-            m_buffer[index] = Pixel::Blend(spritePixel, targetPixel, spritePixel.a);
+            if (spritePixel.a > 0) m_buffer[index] = spritePixel;
         }
     }
 }
 
-void Renderer::Present(uint8_t* target, uint32_t targetWidth, uint32_t targetHeight)
+void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32_t targetHeight)
 {
     memcpy((void*)target, (void*)m_buffer.data(), sizeof(Pixel) * m_buffer.size());
 }

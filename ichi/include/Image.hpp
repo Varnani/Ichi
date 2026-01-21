@@ -14,6 +14,6 @@ struct Image
     std::vector<Pixel> pixels;
 
     void Load(std::string path);
-    Pixel GetPixel(uint32_t x, uint32_t y);
+    Pixel GetPixel(const uint32_t x, const uint32_t y) const;
     void SetPixel(uint32_t x, uint32_t y, Pixel pixel);
 };

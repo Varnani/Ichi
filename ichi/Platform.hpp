@@ -6,6 +6,10 @@ int AppEntry();
 #include <windows.h>
 
 #ifdef _DEBUG
+#define FORCE_WINDOWS_CONSOLE
+#endif
+
+#ifdef FORCE_WINDOWS_CONSOLE
 #include <fcntl.h>
 #include <io.h>
 #include <iostream>
@@ -56,7 +60,7 @@ static void RedirectIOToConsole()
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-#ifdef _DEBUG
+#ifdef FORCE_WINDOWS_CONSOLE
     RedirectIOToConsole();
 #endif
     return AppEntry();

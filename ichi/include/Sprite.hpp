@@ -15,5 +15,5 @@ struct Sprite
 
     Image* image;
 
-    Pixel GetPixel(uint32_t x, uint32_t y);
+    Pixel GetPixel(uint32_t x, uint32_t y) const;
 };

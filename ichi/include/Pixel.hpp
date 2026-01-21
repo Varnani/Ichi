@@ -12,7 +12,6 @@ struct Pixel
 
     static Pixel FromUInt32(uint32_t source);
     static uint32_t ToUInt32(Pixel pixel);
-    static Pixel Blend(Pixel src, Pixel dst, uint8_t a);
 
     static const Pixel Red;
     static const Pixel Green;

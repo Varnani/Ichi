@@ -1,5 +1,7 @@
+#include <chrono>
 #include <cstdint>
 #include <exception>
+#include <format>
 #include <vector>
 
 #include <rgfw.hpp>
@@ -7,6 +9,7 @@
 #include "Platform.hpp"
 #include "include/Image.hpp"
 #include "include/Pixel.hpp"
+#include "include/Profiler.hpp"
 #include "include/Renderer.hpp"
 
 glm::uvec2 spritePos{ 0, 0 };
@@ -16,6 +19,7 @@ static void KeyCallback(RGFW_window* window, RGFW_key key, u8 keyChar, RGFW_keym
     if (pressed == RGFW_FALSE) return;
 
     if (key == RGFW_escape) RGFW_window_setShouldClose(window, 1);
+    if (key == RGFW_p) std::printf("%s", Profiler::Get().GenerateReport().c_str());
 
     if (key == RGFW_up) spritePos.y += 32;
     if (key == RGFW_down) spritePos.y -= 32;
@@ -25,10 +29,7 @@ static void KeyCallback(RGFW_window* window, RGFW_key key, u8 keyChar, RGFW_keym
 
 static void MouseCallback(RGFW_window* window, RGFW_mouseButton button, RGFW_bool pressed)
 {
-    if (pressed == RGFW_FALSE) return;
-    int mouseX, mouseY;
-    RGFW_window_getMouse(window, &mouseX, &mouseY);
-    std::printf("You clicked at x: %d, y: %d\n", mouseX, mouseY);
+    ;
 }
 
 static RGFW_surface* GetSurface(RGFW_monitor* monitor, int width, int height)
@@ -81,19 +82,65 @@ int AppEntry()
 
     Renderer renderer{};
 
+    float deltaTime = 0;
+    float passedTime = 0;
+
     while (RGFW_window_shouldClose(window) == RGFW_FALSE)
     {
+        deltaTime = Profiler::Get().GetRootMarker().durationAsSeconds;
+        passedTime += deltaTime;
+
+        Profiler::Get().BeginFrame();
+
         RGFW_pollEvents();
         RGFW_window_getSize(window, &width, &height);
 
+        const float animTime = 0.3;
+        if (passedTime > animTime)
+        {
+            passedTime -= animTime;
+            ichiFrame.startX = (ichiFrame.startX + 16) % ichiSheet.size.x;
+        }
+
         surface = GetSurface(monitor, width, height);
 
-        renderer.Resize(width, height);
-        renderer.Clear(Pixel::Black);
-        renderer.DrawSprite(spritePos, ichiFrame);
-        renderer.Present(surface->data, surface->w, surface->h);
+        Profiler::Get().BeginMarker("Renderer::Resize");
+        {
+            renderer.Resize(width, height);
+        }
+        Profiler::Get().EndMarker();
 
-        RGFW_window_blitSurface(window, surface);
+        Profiler::Get().BeginMarker("Renderer::Clear");
+        {
+            renderer.Clear(Pixel::Black);
+        }
+        Profiler::Get().EndMarker();
+
+        Profiler::Get().BeginMarker("Renderer::DrawSprite");
+        {
+            renderer.DrawSprite(spritePos, ichiFrame);
+        }
+        Profiler::Get().EndMarker();
+
+        Profiler::Get().BeginMarker("Renderer::Present");
+        {
+            renderer.Present(surface->data, surface->w, surface->h);
+        }
+        Profiler::Get().EndMarker();
+
+        Profiler::Get().BeginMarker("RGFW_window_blitSurface");
+        {
+            RGFW_window_blitSurface(window, surface);
+        }
+        Profiler::Get().EndMarker();
+
+        Profiler::Get().BeginMarker("RGFW_window_setName");
+        {
+            RGFW_window_setName(window, std::format("Ichi | {:>3}fps {:>8.4f}ms", int(1.0f / deltaTime), deltaTime).c_str());
+        }
+        Profiler::Get().EndMarker();
+
+        Profiler::Get().EndFrame();
     }
 
     if (surface != nullptr) RGFW_surface_free(surface);
