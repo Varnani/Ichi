@@ -7,14 +7,15 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 # glob up project sources
-file(GLOB ichi_sources CONFIGURE_DEPENDS
-    ${CMAKE_SOURCE_DIR}/ichi/source/*.cpp
-)
+file(GLOB ichi_sources CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/ichi/source/*.cpp)
 
 add_executable(${CMAKE_PROJECT_NAME} WIN32 MACOSX_BUNDLE)
 target_compile_features(${CMAKE_PROJECT_NAME} PRIVATE cxx_std_20)
 target_sources(${CMAKE_PROJECT_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/ichi/Main.cpp")
 target_sources(${CMAKE_PROJECT_NAME} PUBLIC ${ichi_sources})
+
+add_custom_target(copy_resources COMMAND ${CMAKE_COMMAND} -P ${CMAKE_SOURCE_DIR}/cmake/copy_resources.in)
+add_dependencies(${CMAKE_PROJECT_NAME} copy_resources)
 
 if(WIN32)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE PLATFORM_WINDOWS)

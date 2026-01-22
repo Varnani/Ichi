@@ -7,6 +7,12 @@
 #include "../include/Renderer.hpp"
 #include "../include/Sprite.hpp"
 
+Renderer& Renderer::Get()
+{
+    static Renderer renderer{};
+    return renderer;
+}
+
 void Renderer::Resize(const uint32_t w, const uint32_t h)
 {
     if (w == width && h == height) return;
@@ -30,15 +36,17 @@ void Renderer::Clear(const Pixel color)
     }
 }
 
-void Renderer::DrawRect(const glm::vec2 position, const glm::vec2 size, const Pixel color)
+void Renderer::DrawRect(const glm::ivec2 position, const glm::ivec2 size, const Pixel color)
 {
-    for (size_t x = position.x; x < position.x + size.x; x++)
+    for (int x = position.x; x < position.x + size.x; x++)
     {
         if (x >= width) continue;
+        if (x < 0) continue;
 
-        for (size_t y = position.y; y < position.y + size.y; y++)
+        for (int y = position.y; y < position.y + size.y; y++)
         {
             if (y >= height) continue;
+            if (y < 0) continue;
 
             size_t index = x + (y * width);
             m_buffer[index] = color;
@@ -46,17 +54,19 @@ void Renderer::DrawRect(const glm::vec2 position, const glm::vec2 size, const Pi
     }
 }
 
-void Renderer::DrawSprite(const glm::uvec2 position, const Sprite& sprite)
+void Renderer::DrawSprite(const glm::ivec2 position, const Sprite& sprite)
 {
-    for (uint32_t spriteX = 0; spriteX < sprite.width; spriteX++)
+    for (int spriteX = 0; spriteX < sprite.width; spriteX++)
     {
-        uint32_t bufX = spriteX + position.x;
+        int bufX = spriteX + position.x;
         if (bufX >= width) continue;
+        if (bufX < 0) continue;
 
-        for (uint32_t spriteY = 0; spriteY < sprite.height; spriteY++)
+        for (int spriteY = 0; spriteY < sprite.height; spriteY++)
         {
-            uint32_t bufY = spriteY + position.y;
+            int bufY = spriteY + position.y;
             if (bufY >= height) continue;
+            if (bufY < 0) continue;
 
             size_t index = bufX + (bufY * width);
 

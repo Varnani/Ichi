@@ -7,30 +7,14 @@
 #include <rgfw.hpp>
 
 #include "Platform.hpp"
+#include "include/Game.hpp"
 #include "include/Image.hpp"
+#include "include/Input.hpp"
 #include "include/Pixel.hpp"
 #include "include/Profiler.hpp"
 #include "include/Renderer.hpp"
-
-glm::uvec2 spritePos{ 0, 0 };
-
-static void KeyCallback(RGFW_window* window, RGFW_key key, u8 keyChar, RGFW_keymod keyMod, RGFW_bool repeat, RGFW_bool pressed)
-{
-    if (pressed == RGFW_FALSE) return;
-
-    if (key == RGFW_escape) RGFW_window_setShouldClose(window, 1);
-    if (key == RGFW_p) std::printf("%s", Profiler::Get().GenerateReport().c_str());
-
-    if (key == RGFW_up) spritePos.y += 32;
-    if (key == RGFW_down) spritePos.y -= 32;
-    if (key == RGFW_right) spritePos.x += 32;
-    if (key == RGFW_left) spritePos.x -= 32;
-}
-
-static void MouseCallback(RGFW_window* window, RGFW_mouseButton button, RGFW_bool pressed)
-{
-    ;
-}
+#include "include/Resources.hpp"
+#include "include/Sprite.hpp"
 
 static RGFW_surface* GetSurface(RGFW_monitor* monitor, int width, int height)
 {
@@ -57,9 +41,6 @@ static RGFW_surface* GetSurface(RGFW_monitor* monitor, int width, int height)
 
 int AppEntry()
 {
-    RGFW_setKeyCallback(KeyCallback);
-    RGFW_setMouseButtonCallback(MouseCallback);
-
     int width = 1280;
     int height = 960;
 
@@ -69,78 +50,46 @@ int AppEntry()
 
     if (monitor == nullptr) throw std::exception{ "can't query monitor!" };
 
-    Image ichiSheet{};
-    ichiSheet.Load("C:\\Users\\ozang\\source\\repos\\Ichi\\res\\ichi-idle.png");
+    Profiler& profiler = Profiler::Get();
+    Renderer& renderer = Renderer::Get();
+    Resources& resources = Resources::Get();
+    Input& input = Input::Get();
+    Game& game = Game::Get();
 
-    Sprite ichiFrame{};
-
-    ichiFrame.image = &ichiSheet;
-    ichiFrame.startX = 0;
-    ichiFrame.startY = 0;
-    ichiFrame.width = 16;
-    ichiFrame.height = 32;
-
-    Renderer renderer{};
+    input.RegisterCallbacks();
+    resources.LoadFromDisk();
 
     float deltaTime = 0;
     float passedTime = 0;
 
     while (RGFW_window_shouldClose(window) == RGFW_FALSE)
     {
-        deltaTime = Profiler::Get().GetRootMarker().durationAsSeconds;
+        deltaTime = profiler.GetRootMarker().durationAsSeconds;
         passedTime += deltaTime;
 
-        Profiler::Get().BeginFrame();
+        profiler.BeginFrame();
 
+        input.UpdateKeyStates();
         RGFW_pollEvents();
+
+        game.Update();
+
         RGFW_window_getSize(window, &width, &height);
-
-        const float animTime = 0.3;
-        if (passedTime > animTime)
-        {
-            passedTime -= animTime;
-            ichiFrame.startX = (ichiFrame.startX + 16) % ichiSheet.size.x;
-        }
-
         surface = GetSurface(monitor, width, height);
 
-        Profiler::Get().BeginMarker("Renderer::Resize");
-        {
-            renderer.Resize(width, height);
-        }
-        Profiler::Get().EndMarker();
+        renderer.Resize(width, height);
+        renderer.Clear(Pixel::Black);
+        renderer.Present(surface->data, surface->w, surface->h);
 
-        Profiler::Get().BeginMarker("Renderer::Clear");
-        {
-            renderer.Clear(Pixel::Black);
-        }
-        Profiler::Get().EndMarker();
+        RGFW_window_blitSurface(window, surface);
+        RGFW_window_setName(window, std::format("Ichi | {:>3}fps {:>8.4f}ms", int(1.0f / deltaTime), deltaTime).c_str());
 
-        Profiler::Get().BeginMarker("Renderer::DrawSprite");
-        {
-            renderer.DrawSprite(spritePos, ichiFrame);
-        }
-        Profiler::Get().EndMarker();
+        profiler.EndFrame();
 
-        Profiler::Get().BeginMarker("Renderer::Present");
+        if (input.IsKeyPressed(KeyCode::P))
         {
-            renderer.Present(surface->data, surface->w, surface->h);
+            std::printf("%s\n", profiler.GenerateReport().c_str());
         }
-        Profiler::Get().EndMarker();
-
-        Profiler::Get().BeginMarker("RGFW_window_blitSurface");
-        {
-            RGFW_window_blitSurface(window, surface);
-        }
-        Profiler::Get().EndMarker();
-
-        Profiler::Get().BeginMarker("RGFW_window_setName");
-        {
-            RGFW_window_setName(window, std::format("Ichi | {:>3}fps {:>8.4f}ms", int(1.0f / deltaTime), deltaTime).c_str());
-        }
-        Profiler::Get().EndMarker();
-
-        Profiler::Get().EndFrame();
     }
 
     if (surface != nullptr) RGFW_surface_free(surface);
