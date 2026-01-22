@@ -3,6 +3,7 @@
 #include "../include/Input.hpp"
 #include "../include/KeyCodes.hpp"
 #include "../include/Profiler.hpp"
+#include "../include/Time.hpp"
 
 #include <format>
 
@@ -23,13 +24,15 @@ void Input::RegisterCallbacks()
 
 void Input::SetKeyState(KeyCode key, KeyState state)
 {
-    std::printf(std::format("SetKeyState - key: {} state: {}\n", (uint8_t)key, (uint8_t)state).c_str());
+    uint64_t counter = Time::Get().frameCounter;
+    std::printf(std::format("frame {} - SetKeyState - key: {} state: {}\n", counter, (uint8_t)key, (uint8_t)state).c_str());
     keyStates[key] = state;
 }
 
 void Input::SetMouseButtonState(MouseButton button, KeyState state)
 {
-    std::printf(std::format("SetMouseButtonState - key: {} state: {}\n", (uint8_t)button, (uint8_t)state).c_str());
+    uint64_t counter = Time::Get().frameCounter;
+    std::printf(std::format("frame {} - SetMouseButtonState - key: {} state: {}\n", counter, (uint8_t)button, (uint8_t)state).c_str());
     mouseButtonStates[button] = state;
 }
 

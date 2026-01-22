@@ -8,13 +8,12 @@
 
 #include "Platform.hpp"
 #include "include/Game.hpp"
-#include "include/Image.hpp"
 #include "include/Input.hpp"
 #include "include/Pixel.hpp"
 #include "include/Profiler.hpp"
 #include "include/Renderer.hpp"
 #include "include/Resources.hpp"
-#include "include/Sprite.hpp"
+#include "include/Time.hpp"
 
 static RGFW_surface* GetSurface(RGFW_monitor* monitor, int width, int height)
 {
@@ -54,18 +53,16 @@ int AppEntry()
     Renderer& renderer = Renderer::Get();
     Resources& resources = Resources::Get();
     Input& input = Input::Get();
+    Time& time = Time::Get();
     Game& game = Game::Get();
 
     input.RegisterCallbacks();
     resources.LoadFromDisk();
 
-    float deltaTime = 0;
-    float passedTime = 0;
-
     while (RGFW_window_shouldClose(window) == RGFW_FALSE)
     {
-        deltaTime = profiler.GetRootMarker().durationAsSeconds;
-        passedTime += deltaTime;
+        float dt = profiler.GetRootMarker().durationAsSeconds;
+        time.Update(dt);
 
         profiler.BeginFrame();
 
@@ -82,7 +79,7 @@ int AppEntry()
         renderer.Present(surface->data, surface->w, surface->h);
 
         RGFW_window_blitSurface(window, surface);
-        RGFW_window_setName(window, std::format("Ichi | {:>3}fps {:>8.4f}ms", int(1.0f / deltaTime), deltaTime).c_str());
+        RGFW_window_setName(window, std::format("Ichi | {:>3}fps {:>8.4f}ms", int(1.0f / time.deltaTime), time.deltaTime).c_str());
 
         profiler.EndFrame();
 
