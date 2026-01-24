@@ -7,8 +7,8 @@
 
 #include <format>
 
-void KeyCallback(RGFW_window* window, RGFW_key key, u8 keyChar, RGFW_keymod keyMod, RGFW_bool repeat, RGFW_bool pressed);
-void MouseCallback(RGFW_window* window, RGFW_mouseButton button, RGFW_bool pressed);
+static void KeyCallback(RGFW_window* window, RGFW_key key, u8 keyChar, RGFW_keymod keyMod, RGFW_bool repeat, RGFW_bool pressed);
+static void MouseCallback(RGFW_window* window, RGFW_mouseButton button, RGFW_bool pressed);
 
 Input& Input::Get()
 {

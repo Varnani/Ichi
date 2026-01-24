@@ -16,7 +16,7 @@ Profiler& Profiler::Get()
 
 void Profiler::BeginFrame()
 {
-    m_activeRoot = Marker{ "Frame" };
+    m_activeRoot = ProfilerMarker{ "Frame" };
     m_activeMarker = &m_activeRoot;
 }
 
@@ -33,7 +33,7 @@ void Profiler::EndFrame()
 
 void Profiler::BeginMarker(const std::string name)
 {
-    Marker* marker = m_activeMarker->CreateSubMarker(name);
+    ProfilerMarker* marker = m_activeMarker->CreateSubMarker(name);
     marker->parentMarker = m_activeMarker;
     m_activeMarker = marker;
 }
@@ -44,17 +44,17 @@ void Profiler::EndMarker()
     m_activeMarker = m_activeMarker->parentMarker;
 }
 
-Marker& Profiler::GetRootMarker()
+ProfilerMarker& Profiler::GetRootMarker()
 {
     return m_finishedRoot;
 }
 
 std::string Profiler::GenerateReport()
 {
-    Marker& rootMarker = GetRootMarker();
+    ProfilerMarker& rootMarker = GetRootMarker();
     if (rootMarker.subMarkers.size() == 0) return "Report is empty.";
 
-    std::stack<Marker*> markerStack;
+    std::stack<ProfilerMarker*> markerStack;
     std::stack<bool> visitStack;
 
     markerStack.push(&rootMarker);
@@ -65,7 +65,7 @@ std::string Profiler::GenerateReport()
     int indentLevel = 0;
     while (!markerStack.empty())
     {
-        Marker* marker = markerStack.top();
+        ProfilerMarker* marker = markerStack.top();
         markerStack.pop();
 
         bool isVisited = visitStack.top();
@@ -130,23 +130,23 @@ float GetElapsed(TimePoint start, TimePoint end)
 }
 // ------
 
-Marker::Marker(const std::string name)
+ProfilerMarker::ProfilerMarker(const std::string name)
 {
     this->name = name;
     StartMeasurement();
 }
 
-Marker::Marker()
+ProfilerMarker::ProfilerMarker()
 {
     StartMeasurement();
 }
 
-void Marker::StartMeasurement()
+void ProfilerMarker::StartMeasurement()
 {
     start = GetTime();
 }
 
-void Marker::CompleteMeasurement()
+void ProfilerMarker::CompleteMeasurement()
 {
     measurementCount++;
 
@@ -160,9 +160,9 @@ void Marker::CompleteMeasurement()
     }
 }
 
-Marker* Marker::CreateSubMarker(std::string name)
+ProfilerMarker* ProfilerMarker::CreateSubMarker(std::string name)
 {
-    std::unique_ptr<Marker>& newMarker = subMarkers.emplace_back(std::make_unique<Marker>(name));
-    Marker* markerPtr = newMarker.get();
+    std::unique_ptr<ProfilerMarker>& newMarker = subMarkers.emplace_back(std::make_unique<ProfilerMarker>(name));
+    ProfilerMarker* markerPtr = newMarker.get();
     return markerPtr;
 }

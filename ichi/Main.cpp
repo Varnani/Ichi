@@ -1,9 +1,8 @@
-#include <chrono>
 #include <cstdint>
 #include <exception>
 #include <format>
+#include <stdexcept>
 #include <vector>
-
 #include <rgfw.hpp>
 
 #include "Platform.hpp"
@@ -47,7 +46,7 @@ int AppEntry()
     RGFW_monitor* monitor = RGFW_window_getMonitor(window);
     RGFW_surface* surface = nullptr;
 
-    if (monitor == nullptr) throw std::exception{ "can't query monitor!" };
+    if (monitor == nullptr) throw std::runtime_error{ "can't query monitor!" };
 
     Profiler& profiler = Profiler::Get();
     Renderer& renderer = Renderer::Get();

@@ -5,7 +5,7 @@
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> TimePoint;
 typedef std::chrono::nanoseconds NanoSecs;
 
-struct Marker
+struct ProfilerMarker
 {
     std::string name = "Unnamed";
     float durationAsMilliseconds = 0;
@@ -16,16 +16,16 @@ struct Marker
     TimePoint start;
     TimePoint end;
 
-    std::vector<std::unique_ptr<Marker>> subMarkers;
-    Marker* parentMarker = nullptr;
+    std::vector<std::unique_ptr<ProfilerMarker>> subMarkers;
+    ProfilerMarker* parentMarker = nullptr;
 
-    Marker();
-    Marker(const std::string name);
+    ProfilerMarker();
+    ProfilerMarker(const std::string name);
 
     void StartMeasurement();
     void CompleteMeasurement();
 
-    Marker* CreateSubMarker(std::string name);
+    ProfilerMarker* CreateSubMarker(std::string name);
 };
 
 class Profiler
@@ -37,15 +37,15 @@ public:
     void BeginMarker(const std::string name);
     void EndMarker();
 
-    Marker& GetRootMarker();
+    ProfilerMarker& GetRootMarker();
     std::string GenerateReport();
 
     static Profiler& Get();
 
 private:
-    Marker m_finishedRoot;
-    Marker m_activeRoot;
+    ProfilerMarker m_finishedRoot;
+    ProfilerMarker m_activeRoot;
 
-    Marker* m_activeMarker;
-    Marker* m_activeLoopMarker;
+    ProfilerMarker* m_activeMarker;
+    ProfilerMarker* m_activeLoopMarker;
 };
