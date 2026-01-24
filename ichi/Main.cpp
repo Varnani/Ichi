@@ -1,9 +1,9 @@
 #include <cstdint>
 #include <exception>
 #include <format>
+#include <rgfw.hpp>
 #include <stdexcept>
 #include <vector>
-#include <rgfw.hpp>
 
 #include "Platform.hpp"
 #include "include/Game.hpp"
@@ -13,6 +13,9 @@
 #include "include/Renderer.hpp"
 #include "include/Resources.hpp"
 #include "include/Time.hpp"
+
+static void RenderEntities(int screenWidth, int screenHeight);
+static void RenderTiles(int screenWidth, int screenHeight);
 
 static RGFW_surface* GetSurface(RGFW_monitor* monitor, int width, int height)
 {
@@ -57,6 +60,7 @@ int AppEntry()
 
     input.RegisterCallbacks();
     resources.LoadFromDisk();
+    game.Initialize();
 
     while (RGFW_window_shouldClose(window) == RGFW_FALSE)
     {
@@ -73,12 +77,25 @@ int AppEntry()
         RGFW_window_getSize(window, &width, &height);
         surface = GetSurface(monitor, width, height);
 
-        renderer.Resize(width, height);
-        renderer.Clear(Pixel::Black);
-        renderer.Present(surface->data, surface->w, surface->h);
+        profiler.BeginMarker("Rendering");
+        {
+            renderer.Resize(width, height);
+            renderer.Clear(Pixel::Black);
 
-        RGFW_window_blitSurface(window, surface);
-        RGFW_window_setName(window, std::format("Ichi | {:>3}fps {:>8.4f}ms", int(1.0f / time.deltaTime), time.deltaTime).c_str());
+            RenderTiles(width, height);
+            RenderEntities(width, height);
+
+            renderer.Present(surface->data, surface->w, surface->h);
+        }
+        profiler.EndMarker();
+
+        profiler.BeginMarker("RGFW_window_blitSurface");
+        {
+            RGFW_window_blitSurface(window, surface);
+        }
+        profiler.EndMarker();
+
+        RGFW_window_setName(window, std::format("Ichi | {:>3}fps {:>8.4f}ms", int(1.0f / time.deltaTime), time.deltaTime * 1000).c_str());
 
         profiler.EndFrame();
 
@@ -92,4 +109,58 @@ int AppEntry()
     RGFW_window_close(window);
 
     return 0;
+}
+
+static glm::ivec2 GameToScreenCoords(glm::ivec2 halfScreen, glm::ivec2 gamePos, glm::ivec2 camera)
+{
+    glm::ivec2 pos = gamePos - camera;
+
+    pos.x *= Game::GRID_SIZE;
+    pos.y *= -Game::GRID_SIZE;
+
+    pos += halfScreen;
+
+    return pos;
+}
+
+static void RenderEntities(int screenWidth, int screenHeight)
+{
+    Profiler::Get().BeginMarker("RenderEntities");
+
+    Game& game = Game::Get();
+    Renderer& renderer = Renderer::Get();
+
+    glm::ivec2 halfScreen{ screenWidth / 2, screenHeight / 2 };
+
+    for (size_t i = 0; i < game.entities.size(); i++)
+    {
+        Entity& entity = game.entities[i];
+
+        glm::ivec2 screenPos = GameToScreenCoords(halfScreen, entity.position, game.camera);
+
+        renderer.DrawSprite(screenPos, entity.sprite);
+    }
+
+    Profiler::Get().EndMarker();
+}
+
+static void RenderTiles(int screenWidth, int screenHeight)
+{
+    Profiler::Get().BeginMarker("RenderTiles");
+
+    Game& game = Game::Get();
+    Renderer& renderer = Renderer::Get();
+
+    glm::ivec2 halfScreen{ screenWidth / 2, screenHeight / 2 };
+
+    for (size_t i = 0; i < game.tiles.size(); i++)
+    {
+        Tile& tile = game.tiles[i];
+
+        glm::ivec2 screenPos = GameToScreenCoords(halfScreen, tile.position, game.camera);
+
+        renderer.DrawSprite(screenPos, tile.sprite);
+    }
+
+    Profiler::Get().EndMarker();
 }

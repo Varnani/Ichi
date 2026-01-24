@@ -45,7 +45,5 @@ public:
 private:
     ProfilerMarker m_finishedRoot;
     ProfilerMarker m_activeRoot;
-
     ProfilerMarker* m_activeMarker;
-    ProfilerMarker* m_activeLoopMarker;
 };
