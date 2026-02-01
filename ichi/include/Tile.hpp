@@ -5,6 +5,8 @@
 
 struct Tile
 {
-    glm::ivec2 position;
+    glm::ivec2 coords;
     Sprite sprite;
+
+    glm::vec2 GetPosition();
 };

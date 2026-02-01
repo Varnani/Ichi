@@ -5,6 +5,11 @@
 
 struct Entity
 {
-    glm::ivec2 position;
+    glm::vec2 spritePosition;
+    glm::ivec2 coords;
     Sprite sprite;
+
+    void SetCoords(glm::ivec2 coords);
+    void MoveTo(glm::ivec2 coords);
 };
+

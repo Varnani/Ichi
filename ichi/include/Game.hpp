@@ -8,7 +8,7 @@ struct Game
 {
     static constexpr int GRID_SIZE = 32;
 
-    glm::ivec2 camera;
+    glm::vec2 camera;
     std::vector<Entity> entities;
     std::vector<Tile> tiles;
 

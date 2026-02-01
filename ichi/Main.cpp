@@ -13,6 +13,7 @@
 #include "include/Renderer.hpp"
 #include "include/Resources.hpp"
 #include "include/Time.hpp"
+#include "include/Entity.hpp"
 
 static void RenderEntities(int screenWidth, int screenHeight);
 static void RenderTiles(int screenWidth, int screenHeight);
@@ -111,15 +112,11 @@ int AppEntry()
     return 0;
 }
 
-static glm::ivec2 GameToScreenCoords(glm::ivec2 halfScreen, glm::ivec2 gamePos, glm::ivec2 camera)
+static glm::ivec2 GameToScreenCoords(glm::vec2 halfScreen, glm::vec2 gamePos, glm::vec2 camera)
 {
-    glm::ivec2 pos = gamePos - camera;
-
-    pos.x *= Game::GRID_SIZE;
-    pos.y *= -Game::GRID_SIZE;
-
+    glm::vec2 pos = gamePos - camera;
+    pos.y = -pos.y;
     pos += halfScreen;
-
     return pos;
 }
 
@@ -130,13 +127,13 @@ static void RenderEntities(int screenWidth, int screenHeight)
     Game& game = Game::Get();
     Renderer& renderer = Renderer::Get();
 
-    glm::ivec2 halfScreen{ screenWidth / 2, screenHeight / 2 };
+    glm::vec2 halfScreen{ (float)screenWidth / 2.0, (float)screenHeight / 2.0 };
 
     for (size_t i = 0; i < game.entities.size(); i++)
     {
         Entity& entity = game.entities[i];
 
-        glm::ivec2 screenPos = GameToScreenCoords(halfScreen, entity.position, game.camera);
+        glm::ivec2 screenPos = GameToScreenCoords(halfScreen, entity.spritePosition, game.camera);
 
         renderer.DrawSprite(screenPos, entity.sprite);
     }
@@ -157,7 +154,7 @@ static void RenderTiles(int screenWidth, int screenHeight)
     {
         Tile& tile = game.tiles[i];
 
-        glm::ivec2 screenPos = GameToScreenCoords(halfScreen, tile.position, game.camera);
+        glm::ivec2 screenPos = GameToScreenCoords(halfScreen, tile.GetPosition(), game.camera);
 
         renderer.DrawSprite(screenPos, tile.sprite);
     }

@@ -42,8 +42,8 @@ void Game::Initialize()
         for (int y = 0; y < 20; y++)
         {
             Tile tile{};
-            tile.position.x = x - 10;
-            tile.position.y = y - 10;
+            tile.coords.x = x - 10;
+            tile.coords.y = y - 10;
 
             tile.sprite = Resources::Get().sprites.testTile;
 
@@ -61,18 +61,22 @@ void Game::Update()
 
     if (input.IsKeyDown(KeyCode::ShiftL))
     {
-        if (input.IsKeyPressed(KeyCode::Right)) camera.x += 1;
-        if (input.IsKeyPressed(KeyCode::Left)) camera.x -= 1;
-        if (input.IsKeyPressed(KeyCode::Up)) camera.y += 1;
-        if (input.IsKeyPressed(KeyCode::Down)) camera.y -= 1;
+        if (input.IsKeyDown(KeyCode::Right)) camera.x += 1;
+        if (input.IsKeyDown(KeyCode::Left)) camera.x -= 1;
+        if (input.IsKeyDown(KeyCode::Up)) camera.y += 1;
+        if (input.IsKeyDown(KeyCode::Down)) camera.y -= 1;
     }
 
     else
     {
-        if (input.IsKeyPressed(KeyCode::Right)) player.position.x += 1;
-        if (input.IsKeyPressed(KeyCode::Left)) player.position.x -= 1;
-        if (input.IsKeyPressed(KeyCode::Up)) player.position.y += 1;
-        if (input.IsKeyPressed(KeyCode::Down)) player.position.y -= 1;
+        glm::ivec2 playerPos = player.coords;
+
+        if (input.IsKeyPressed(KeyCode::Right)) playerPos.x += 1;
+        if (input.IsKeyPressed(KeyCode::Left)) playerPos.x -= 1;
+        if (input.IsKeyPressed(KeyCode::Up)) playerPos.y += 1;
+        if (input.IsKeyPressed(KeyCode::Down)) playerPos.y -= 1;
+
+        player.MoveTo(playerPos);
     }
 
     AnimatePlayer(player.sprite);
