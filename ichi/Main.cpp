@@ -14,6 +14,7 @@
 #include "include/Resources.hpp"
 #include "include/Time.hpp"
 #include "include/Entity.hpp"
+#include "include/Coroutines.hpp"
 
 static void RenderEntities(int screenWidth, int screenHeight);
 static void RenderTiles(int screenWidth, int screenHeight);
@@ -57,6 +58,7 @@ int AppEntry()
     Resources& resources = Resources::Get();
     Input& input = Input::Get();
     Time& time = Time::Get();
+    Coroutines& coroutines = Coroutines::Get();
     Game& game = Game::Get();
 
     input.RegisterCallbacks();
@@ -73,6 +75,7 @@ int AppEntry()
         input.UpdateKeyStates();
         RGFW_pollEvents();
 
+        coroutines.ProcessCoroutines();
         game.Update();
 
         RGFW_window_getSize(window, &width, &height);
