@@ -1,10 +1,10 @@
 #include "../include/Game.hpp"
-#include "../include/Resources.hpp"
-#include "../include/Input.hpp"
-#include "../include/Profiler.hpp"
-#include "../include/Tile.hpp"
-#include "../include/KeyCodes.hpp"
 #include "../include/Entity.hpp"
+#include "../include/Input.hpp"
+#include "../include/KeyCodes.hpp"
+#include "../include/Profiler.hpp"
+#include "../include/Resources.hpp"
+#include "../include/Tile.hpp"
 #include "../include/Time.hpp"
 
 void AnimatePlayer(Sprite& playerSprite)
@@ -45,7 +45,9 @@ void Game::Initialize()
             tile.coords.x = x - 10;
             tile.coords.y = y - 10;
 
-            tile.sprite = Resources::Get().sprites.testTile;
+            if (x == 0 || x == 19) tile.type = TileType::TestWall;
+            else if (y == 0 || y == 19) tile.type = TileType::TestWall;
+            else tile.type = TileType::TestGround;
 
             tiles.push_back(tile);
         }

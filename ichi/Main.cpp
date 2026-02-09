@@ -135,9 +135,7 @@ static void RenderEntities(int screenWidth, int screenHeight)
     for (size_t i = 0; i < game.entities.size(); i++)
     {
         Entity& entity = game.entities[i];
-
         glm::ivec2 screenPos = GameToScreenCoords(halfScreen, entity.spritePosition, game.camera);
-
         renderer.DrawSprite(screenPos, entity.sprite);
     }
 
@@ -151,15 +149,13 @@ static void RenderTiles(int screenWidth, int screenHeight)
     Game& game = Game::Get();
     Renderer& renderer = Renderer::Get();
 
-    glm::ivec2 halfScreen{ screenWidth / 2, screenHeight / 2 };
+    glm::vec2 halfScreen{ (float)screenWidth / 2.0, (float)screenHeight / 2.0 };
 
     for (size_t i = 0; i < game.tiles.size(); i++)
     {
         Tile& tile = game.tiles[i];
-
         glm::ivec2 screenPos = GameToScreenCoords(halfScreen, tile.GetPosition(), game.camera);
-
-        renderer.DrawSprite(screenPos, tile.sprite);
+        renderer.DrawSprite(screenPos, tile.GetSprite());
     }
 
     Profiler::Get().EndMarker();
