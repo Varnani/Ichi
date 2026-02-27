@@ -5,7 +5,6 @@
 #include <stdexcept>
 #include <vector>
 
-#include "Platform.hpp"
 #include "include/Game.hpp"
 #include "include/Input.hpp"
 #include "include/Pixel.hpp"
@@ -15,6 +14,8 @@
 #include "include/Time.hpp"
 #include "include/Entity.hpp"
 #include "include/Coroutines.hpp"
+
+#include "Platform.hpp"
 
 static void RenderEntities(int screenWidth, int screenHeight);
 static void RenderTiles(int screenWidth, int screenHeight);

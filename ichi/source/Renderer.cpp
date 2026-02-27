@@ -14,6 +14,11 @@ Renderer& Renderer::Get()
     return renderer;
 }
 
+/// <summary>
+/// Resizes the internal buffer if needed, no-op otherwise. Does not clear.
+/// </summary>
+/// <param name="w">New width</param>
+/// <param name="h">New height</param>
 void Renderer::Resize(const uint32_t w, const uint32_t h)
 {
     Profiler::Get().BeginMarker("Renderer::Resize");
@@ -32,6 +37,10 @@ void Renderer::Resize(const uint32_t w, const uint32_t h)
     Profiler::Get().EndMarker();
 }
 
+/// <summary>
+/// Clears the buffer with given pixel value.
+/// </summary>
+/// <param name="color">Color to fill.</param>
 void Renderer::Clear(const Pixel color)
 {
     Profiler::Get().BeginMarker("Renderer::Clear");
@@ -48,6 +57,7 @@ void Renderer::Clear(const Pixel color)
 
     Profiler::Get().EndMarker();
 }
+
 /// <summary>
 /// Draws a colored, filled rect to the screen.
 /// </summary>
@@ -104,11 +114,21 @@ void Renderer::DrawSprite(const glm::ivec2 position, const Sprite& sprite)
     }
 }
 
+/// <summary>
+/// Blits the internal buffer to given target. 
+/// If sizes match, does a memcpy. 
+/// If not, does a nearest-neighbor resize.
+/// </summary>
+/// <param name="target">Target buffer pointer</param>
+/// <param name="targetWidth">Target width</param>
+/// <param name="targetHeight">Target height</param>
 void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32_t targetHeight)
 {
     Profiler::Get().BeginMarker("Renderer::Present");
 
     memcpy((void*)target, (void*)m_buffer.data(), sizeof(Pixel) * m_buffer.size());
+
+    // TODO: nearest-neighbor resize if sizes does not match.
     
     Profiler::Get().EndMarker();
 }
