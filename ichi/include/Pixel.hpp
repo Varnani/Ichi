@@ -26,4 +26,5 @@ namespace Pixel_Asserts
     static_assert(sizeof(Pixel) == 4, "sizeof(Pixel) should be 4.");
     static_assert(std::is_trivially_copyable_v<Pixel>, "Pixel should be trivially copyable.");
     static_assert(std::is_standard_layout_v<Pixel>, "Pixel should have standard layout.");
+    static_assert(std::is_aggregate_v<Pixel>, "Pixel should be an aggregate.");
 } // namespace Pixel_Asserts
