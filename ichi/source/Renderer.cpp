@@ -1,3 +1,4 @@
+#include <cassert>
 #include <cstdint>
 #include <string.h>
 
@@ -7,6 +8,11 @@
 #include "../include/Profiler.hpp"
 #include "../include/Renderer.hpp"
 #include "../include/Sprite.hpp"
+
+static size_t CalculateIndex(size_t x, size_t y, uint32_t scanline)
+{
+    return x + (y * scanline);
+}
 
 Renderer& Renderer::Get()
 {
@@ -76,7 +82,7 @@ void Renderer::DrawRect(const glm::ivec2 position, const glm::ivec2 size, const 
             if (y >= height) continue;
             if (y < 0) continue;
 
-            size_t index = x + (y * width);
+            size_t index = CalculateIndex(x, y, width);
             m_buffer[index] = color;
         }
     }
@@ -106,7 +112,7 @@ void Renderer::DrawSprite(const glm::ivec2 position, const Sprite& sprite)
             if (bufY >= height) continue;
             if (bufY < 0) continue;
 
-            size_t index = bufX + (bufY * width);
+            size_t index = CalculateIndex(bufX, bufY, width);
 
             Pixel spritePixel = sprite.GetPixel(spriteX, spriteY);
             if (spritePixel.a > 0) m_buffer[index] = spritePixel;
@@ -115,9 +121,9 @@ void Renderer::DrawSprite(const glm::ivec2 position, const Sprite& sprite)
 }
 
 /// <summary>
-/// Blits the internal buffer to given target. 
-/// If sizes match, does a memcpy. 
-/// If not, does a nearest-neighbor resize.
+/// Blits the internal buffer to given target.
+/// If sizes match, does a memcpy.
+/// If not, does a nearest-neighbor resize by 2x (retina screens).
 /// </summary>
 /// <param name="target">Target buffer pointer</param>
 /// <param name="targetWidth">Target width</param>
@@ -126,9 +132,42 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
 {
     Profiler::Get().BeginMarker("Renderer::Present");
 
-    memcpy((void*)target, (void*)m_buffer.data(), sizeof(Pixel) * m_buffer.size());
+    if (targetWidth == width && targetHeight == height)
+    {
+        memcpy((void*)target, (void*)m_buffer.data(), sizeof(Pixel) * m_buffer.size());
+    }
 
-    // TODO: nearest-neighbor resize if sizes does not match.
-    
+    else
+    {
+        assert(targetWidth == 2 * width && targetHeight == 2 * height);
+
+        Pixel* targetBuffer = reinterpret_cast<Pixel*>(target);
+        uint32_t scanline = width * 2;
+
+        for (size_t y = 0; y < height; y++)
+        {
+            for (size_t x = 0; x < width; x++)
+            {
+                size_t index = CalculateIndex(x, y, width);
+                Pixel pix = m_buffer[index];
+
+                size_t targetX_1 = x * 2;
+                size_t targetX_2 = targetX_1 + 1;
+                size_t targetY_1 = y * 2;
+                size_t targetY_2 = targetY_1 + 1;
+
+                size_t idx1 = CalculateIndex(targetX_1, targetY_1, scanline);
+                size_t idx2 = CalculateIndex(targetX_2, targetY_1, scanline);
+                size_t idx3 = CalculateIndex(targetX_1, targetY_2, scanline);
+                size_t idx4 = CalculateIndex(targetX_2, targetY_2, scanline);
+
+                targetBuffer[idx1] = pix;
+                targetBuffer[idx2] = pix;
+                targetBuffer[idx3] = pix;
+                targetBuffer[idx4] = pix;
+            }
+        }
+    }
+
     Profiler::Get().EndMarker();
 }

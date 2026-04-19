@@ -2,6 +2,8 @@
 .vscode/
 .vs/
 build/
+release/
+debug/
 bin/
 
 .DS_STORE
