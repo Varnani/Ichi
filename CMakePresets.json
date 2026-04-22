@@ -19,7 +19,7 @@
     },
     {
       "name": "x64-debug",
-      "displayName": "x64 Debug",
+      "displayName": "x64 Debug (Windows)",
       "description": "Target x64 Windows with clang. (Debug)",
       "inherits": "windows-base",
       "architecture": {
@@ -30,10 +30,45 @@
     },
     {
       "name": "x64-release",
-      "displayName": "x64 Release",
-      "description": "Target x64 Windows with clang. (RelWithDebInfo)",
+      "displayName": "x64 Release (Windows)",
+      "description": "Target x64 Windows with clang. (Release)",
       "inherits": "x64-debug",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo" }
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    },
+
+    {
+      "name": "macos-base",
+      "description": "Target macOS with clang.",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    },
+    {
+      "name": "macos-debug",
+      "displayName": "arm64 Debug (macOS)",
+      "description": "Target Apple Silicon macOS with clang. (Debug)",
+      "inherits": "macos-base",
+      "architecture": {
+        "value": "arm64",
+        "strategy": "external"
+      },
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+    },
+    {
+      "name": "macos-release",
+      "displayName": "arm64 Release (macOS)",
+      "description": "Target Apple Silicon macOS with clang. (Release)",
+      "inherits": "macos-debug",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
     }
   ]
 }
