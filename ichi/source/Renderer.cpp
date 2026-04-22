@@ -9,9 +9,9 @@
 #include "../include/Renderer.hpp"
 #include "../include/Sprite.hpp"
 
-static size_t CalculateIndex(size_t x, size_t y, uint32_t scanline)
+static size_t CalculateIndex(size_t x, size_t y, uint32_t width)
 {
-    return x + (y * scanline);
+    return x + (y * width);
 }
 
 Renderer& Renderer::Get()
@@ -72,15 +72,15 @@ void Renderer::Clear(const Pixel color)
 /// <param name="color">Color of the rect.</param>
 void Renderer::DrawRect(const glm::ivec2 position, const glm::ivec2 size, const Pixel color)
 {
-    for (int x = position.x; x < position.x + size.x; x++)
+    for (int y = position.y; y < position.y + size.y; y++)
     {
-        if (x >= width) continue;
-        if (x < 0) continue;
+        if (y >= height) continue;
+        if (y < 0) continue;
 
-        for (int y = position.y; y < position.y + size.y; y++)
+        for (int x = position.x; x < position.x + size.x; x++)
         {
-            if (y >= height) continue;
-            if (y < 0) continue;
+            if (x >= width) continue;
+            if (x < 0) continue;
 
             size_t index = CalculateIndex(x, y, width);
             m_buffer[index] = color;
@@ -100,17 +100,17 @@ void Renderer::DrawSprite(const glm::ivec2 position, const Sprite& sprite)
     int xOffset = sprite.width / 2;
     int yOffset = sprite.height / 2;
 
-    for (int spriteX = 0; spriteX < sprite.width; spriteX++)
+    for (int spriteY = 0; spriteY < sprite.height; spriteY++)
     {
-        int bufX = spriteX + position.x - xOffset;
-        if (bufX >= width) continue;
-        if (bufX < 0) continue;
+        int bufY = spriteY + position.y - yOffset;
+        if (bufY >= height) continue;
+        if (bufY < 0) continue;
 
-        for (int spriteY = 0; spriteY < sprite.height; spriteY++)
+        for (int spriteX = 0; spriteX < sprite.width; spriteX++)
         {
-            int bufY = spriteY + position.y - yOffset;
-            if (bufY >= height) continue;
-            if (bufY < 0) continue;
+            int bufX = spriteX + position.x - xOffset;
+            if (bufX >= width) continue;
+            if (bufX < 0) continue;
 
             size_t index = CalculateIndex(bufX, bufY, width);
 
@@ -134,39 +134,42 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
 
     if (targetWidth == width && targetHeight == height)
     {
-        memcpy((void*)target, (void*)m_buffer.data(), sizeof(Pixel) * m_buffer.size());
+        std::memcpy((void*)target, (void*)m_buffer.data(), sizeof(Pixel) * m_buffer.size());
+        Profiler::Get().EndMarker();
+        return;
     }
 
-    else
+    assert(targetWidth == 2 * width && targetHeight == 2 * height);
+
+    Pixel* sourceBuffer = m_buffer.data();
+    Pixel* targetBuffer = reinterpret_cast<Pixel*>(target);
+
+    for (size_t y = 0; y < height; y++)
     {
-        assert(targetWidth == 2 * width && targetHeight == 2 * height);
+        size_t targetY_1 = y * 2;
 
-        Pixel* targetBuffer = reinterpret_cast<Pixel*>(target);
-        uint32_t scanline = width * 2;
-
-        for (size_t y = 0; y < height; y++)
+        for (size_t x = 0; x < width; x++)
         {
-            for (size_t x = 0; x < width; x++)
-            {
-                size_t index = CalculateIndex(x, y, width);
-                Pixel pix = m_buffer[index];
+            size_t index = CalculateIndex(x, y, width);
+            Pixel pix = sourceBuffer[index];
 
-                size_t targetX_1 = x * 2;
-                size_t targetX_2 = targetX_1 + 1;
-                size_t targetY_1 = y * 2;
-                size_t targetY_2 = targetY_1 + 1;
+            size_t targetX_1 = x * 2;
+            size_t targetX_2 = targetX_1 + 1;
 
-                size_t idx1 = CalculateIndex(targetX_1, targetY_1, scanline);
-                size_t idx2 = CalculateIndex(targetX_2, targetY_1, scanline);
-                size_t idx3 = CalculateIndex(targetX_1, targetY_2, scanline);
-                size_t idx4 = CalculateIndex(targetX_2, targetY_2, scanline);
+            size_t idx1 = CalculateIndex(targetX_1, targetY_1, targetWidth);
+            size_t idx2 = CalculateIndex(targetX_2, targetY_1, targetWidth);
 
-                targetBuffer[idx1] = pix;
-                targetBuffer[idx2] = pix;
-                targetBuffer[idx3] = pix;
-                targetBuffer[idx4] = pix;
-            }
+            targetBuffer[idx1] = pix;
+            targetBuffer[idx2] = pix;
         }
+
+        size_t from = CalculateIndex(0, targetY_1, targetWidth);
+        size_t to = CalculateIndex(0, targetY_1 + 1, targetWidth);
+
+        Pixel* src = targetBuffer + from;
+        Pixel* dst = targetBuffer + to;
+
+        std::memcpy((void*)(dst), (void*)(src), sizeof(Pixel) * targetWidth);
     }
 
     Profiler::Get().EndMarker();

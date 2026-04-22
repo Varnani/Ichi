@@ -15,6 +15,8 @@
 #include "include/Entity.hpp"
 #include "include/Coroutines.hpp"
 
+#define FORCE_WINDOWS_CONSOLE
+
 #include "Platform.hpp"
 
 static void RenderEntities(int screenWidth, int screenHeight);
