@@ -9,6 +9,10 @@
 #include "../include/Renderer.hpp"
 #include "../include/Sprite.hpp"
 
+#ifdef SIMD_ON
+#include <immintrin.h>
+#endif
+
 static size_t CalculateIndex(size_t x, size_t y, uint32_t width)
 {
     return x + (y * width);
@@ -144,13 +148,37 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
     Pixel* sourceBuffer = m_buffer.data();
     Pixel* targetBuffer = reinterpret_cast<Pixel*>(target);
 
+#ifdef SIMD_ON
+    size_t remainder = width % 4;
+    size_t stride = width - remainder;
+#endif
+
     for (size_t y = 0; y < height; y++)
     {
         size_t targetY_1 = y * 2;
+        size_t x = 0;
 
-        for (size_t x = 0; x < width; x++)
+#ifdef SIMD_ON
+        for (; x < stride; x += 4)
+        {
+            size_t from = CalculateIndex(x, y, width);
+            size_t to = CalculateIndex(x * 2, y * 2, targetWidth);
+
+            __m128i* alignedSource = reinterpret_cast<__m128i*>(sourceBuffer + from);
+            __m256i* alignedTarget = reinterpret_cast<__m256i*>(targetBuffer + to);
+
+            __m128i pix = _mm_loadu_si128(alignedSource);
+            __m128i rrgg = _mm_unpacklo_epi32(pix, pix);
+            __m128i bbaa = _mm_unpackhi_epi32(pix, pix);
+            __m256i interleaved = _mm256_set_m128(bbaa, rrgg);
+            _mm256_storeu_si256(alignedTarget, interleaved);
+        }
+#endif
+
+        for (; x < width; x++)
         {
             size_t index = CalculateIndex(x, y, width);
+
             Pixel pix = sourceBuffer[index];
 
             size_t targetX_1 = x * 2;

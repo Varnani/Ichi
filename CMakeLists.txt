@@ -10,6 +10,13 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 add_executable(${CMAKE_PROJECT_NAME} WIN32 MACOSX_BUNDLE)
 target_compile_features(${CMAKE_PROJECT_NAME} PRIVATE cxx_std_20)
 
+# simd option
+option(USE_SIMD "Use SIMD intrinsics" ON)
+if(USE_SIMD)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE SIMD_ON)
+    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -mavx2)
+endif()
+
 # output debug info even with release builds
 if(CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
     target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /Zi)
