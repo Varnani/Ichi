@@ -5,6 +5,8 @@
 #include <stdexcept>
 #include <vector>
 
+#include "include/Coroutines.hpp"
+#include "include/Entity.hpp"
 #include "include/Game.hpp"
 #include "include/Input.hpp"
 #include "include/Pixel.hpp"
@@ -12,8 +14,8 @@
 #include "include/Renderer.hpp"
 #include "include/Resources.hpp"
 #include "include/Time.hpp"
-#include "include/Entity.hpp"
-#include "include/Coroutines.hpp"
+
+#include "include/AlignedAllocator.h"
 
 #define FORCE_WINDOWS_CONSOLE
 
@@ -24,7 +26,7 @@ static void RenderTiles(int screenWidth, int screenHeight);
 
 static RGFW_surface* GetSurface(RGFW_monitor* monitor, int width, int height)
 {
-    static std::vector<uint32_t> buffer{};
+    static std::vector<uint32_t, AlignedAllocator<uint32_t, 32>> buffer{};
     static RGFW_surface* surface = nullptr;
 
     int surfaceWidth = monitor->pixelRatio * width;
@@ -82,6 +84,15 @@ int AppEntry()
         game.Update();
 
         RGFW_window_getSize(window, &width, &height);
+
+#ifdef SIMD_ON
+        // we need each row to begin at 32-byte alignment for simd
+        // (pointer alignment is handled at buffer creation)
+        // each pixel is 4 bytes, that means our rows must contain
+        // 8 element blocks.
+        width += (8 - width % 8) % 8;
+#endif
+
         surface = GetSurface(monitor, width, height);
 
         profiler.BeginMarker("Rendering");
