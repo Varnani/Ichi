@@ -143,17 +143,13 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
         return;
     }
 
-    assert(targetWidth == 2 * width && targetHeight == 2 * height);
+    assert(targetWidth == 2 * width && targetHeight == 2 * height && "target buffer must be double the internal buffer for hidpi.");
 
     Pixel* sourceBuffer = m_buffer.data();
     Pixel* targetBuffer = reinterpret_cast<Pixel*>(target);
 
 #ifdef SIMD_ON
-    constexpr int simdElements = 4; //8; if using 256 bit load block
-    const __m256i mask_lo = _mm256_set_epi32(3, 3, 2, 2, 1, 1, 0, 0);
-    const __m256i mask_hi = _mm256_set_epi32(7, 7, 6, 6, 5, 5, 4, 4);
-    size_t remainder = width % simdElements;
-    size_t stride = width - remainder;
+    assert(width % 8 == 0 && "width must be divisible by 8 for aligned simd access!");
 #endif
 
     for (size_t y = 0; y < height; y++)
@@ -162,34 +158,28 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
         size_t x = 0;
 
 #ifdef SIMD_ON
-        size_t fromIndex = CalculateIndex(x, y, width);
-        size_t toIndex = CalculateIndex(x * 2, targetY_1, targetWidth);
+        size_t fromIndex = CalculateIndex(0, y, width);
+        size_t toIndex = CalculateIndex(0, targetY_1, targetWidth);
 
-        for (; x < stride; x += simdElements)
+        constexpr int simdElements = 4;
+        for (; x < width; x += simdElements)
         {
-            //__m256i* source = reinterpret_cast<__m256i*>(sourceBuffer + fromIndex);
-            //__m256i* target = reinterpret_cast<__m256i*>(targetBuffer + toIndex);
-
-            //__m256i pix = _mm256_loadu_si256(source);
-            //__m256i lo = _mm256_permutevar8x32_epi32(pix, mask_lo);
-            //__m256i hi = _mm256_permutevar8x32_epi32(pix, mask_hi);
-            //_mm256_stream_si256(target, lo);
-            //_mm256_stream_si256(target + 1, hi);
-
             __m128i* source = reinterpret_cast<__m128i*>(sourceBuffer + fromIndex);
             __m256i* target = reinterpret_cast<__m256i*>(targetBuffer + toIndex);
+            __m256i* targetBelow = reinterpret_cast<__m256i*>(targetBuffer + toIndex + targetWidth);
 
-            __m128i pix = _mm_loadu_si128(source);
+            __m128i pix = _mm_load_si128(source);
             __m128i rrgg = _mm_unpacklo_epi32(pix, pix);
             __m128i bbaa = _mm_unpackhi_epi32(pix, pix);
             __m256i interleaved = _mm256_set_m128(bbaa, rrgg);
             _mm256_stream_si256(target, interleaved);
+            _mm256_stream_si256(targetBelow, interleaved);
 
             fromIndex += simdElements;
             toIndex += simdElements * 2;
         }
 #endif
-
+        size_t targetY_2 = targetY_1 + 1;
         for (; x < width; x++)
         {
             size_t index = CalculateIndex(x, y, width);
@@ -201,9 +191,13 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
 
             size_t idx1 = CalculateIndex(targetX_1, targetY_1, targetWidth);
             size_t idx2 = CalculateIndex(targetX_2, targetY_1, targetWidth);
+            size_t idx3 = CalculateIndex(targetX_1, targetY_2, targetWidth);
+            size_t idx4 = CalculateIndex(targetX_2, targetY_2, targetWidth);
 
             targetBuffer[idx1] = pix;
             targetBuffer[idx2] = pix;
+            targetBuffer[idx3] = pix;
+            targetBuffer[idx4] = pix;
         }
     }
 
@@ -211,19 +205,6 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
     // make sure streamed writes are visible after simd ops
     _mm_sfence();
 #endif
-
-    for (size_t y = 0; y < height; y++)
-    {
-        size_t targetY_1 = y * 2;
-
-        size_t from = CalculateIndex(0, targetY_1, targetWidth);
-        size_t to = CalculateIndex(0, targetY_1 + 1, targetWidth);
-
-        Pixel* src = targetBuffer + from;
-        Pixel* dst = targetBuffer + to;
-
-        std::memcpy((void*)(dst), (void*)(src), sizeof(Pixel) * targetWidth);
-    }
 
     Profiler::Get().EndMarker();
 }

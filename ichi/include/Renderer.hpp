@@ -7,6 +7,8 @@
 #include "Pixel.hpp"
 #include "Sprite.hpp"
 
+#include "AlignedAllocator.h"
+
 class Renderer
 {
 public:
@@ -22,5 +24,5 @@ public:
     static Renderer& Get();
 
 private:
-    std::vector<Pixel> m_buffer{};
+    std::vector<Pixel, AlignedAllocator<Pixel, 32>> m_buffer{};
 };
