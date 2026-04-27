@@ -5,5 +5,9 @@ build/
 release/
 debug/
 bin/
+.build/
+.release/
+.debug/
+.bin/
 
 .DS_STORE

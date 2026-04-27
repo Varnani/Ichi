@@ -6,7 +6,6 @@
       "description": "Target Windows with clang.",
       "hidden": true,
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang-cl",
         "CMAKE_CXX_COMPILER": "clang-cl"
@@ -22,6 +21,7 @@
       "displayName": "x64 Debug (Windows)",
       "description": "Target x64 Windows with clang. (Debug)",
       "inherits": "windows-base",
+      "binaryDir": "${sourceDir}/.debug/",
       "architecture": {
         "value": "x64",
         "strategy": "external"
@@ -33,6 +33,7 @@
       "displayName": "x64 Release (Windows)",
       "description": "Target x64 Windows with clang. (Release)",
       "inherits": "x64-debug",
+      "binaryDir": "${sourceDir}/.release/",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
     },
 
@@ -41,7 +42,6 @@
       "description": "Target macOS with clang.",
       "hidden": true,
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++"
@@ -57,6 +57,7 @@
       "displayName": "arm64 Debug (macOS)",
       "description": "Target Apple Silicon macOS with clang. (Debug)",
       "inherits": "macos-base",
+      "binaryDir": "${sourceDir}/.debug/",
       "architecture": {
         "value": "arm64",
         "strategy": "external"
@@ -68,6 +69,7 @@
       "displayName": "arm64 Release (macOS)",
       "description": "Target Apple Silicon macOS with clang. (Release)",
       "inherits": "macos-debug",
+      "binaryDir": "${sourceDir}/.release/",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
     }
   ],
