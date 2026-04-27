@@ -14,15 +14,21 @@ target_compile_features(${CMAKE_PROJECT_NAME} PRIVATE cxx_std_20)
 option(USE_SIMD "Use SIMD intrinsics" ON)
 if(USE_SIMD)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE SIMD_ON)
-    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -mavx2)
 endif()
 
 # output debug info even with release builds
 if(CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
     target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /Zi)
     target_link_options(${CMAKE_PROJECT_NAME} PRIVATE /DEBUG)
+    if(USE_SIMD)
+            target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /arch:AVX2)
+    endif()
+
 else()
     target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -g)
+    if(USE_SIMD)
+            target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -mavx2)
+    endif()
 endif()
 
 # glob up project sources
