@@ -199,7 +199,6 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
         for (size_t x = 0; x < width; x++)
         {
             size_t index = CalculateIndex(x, y, width);
-
             Pixel pix = sourceBuffer[index];
 
             size_t targetX_1 = x * 2;
@@ -207,14 +206,18 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
 
             size_t idx1 = CalculateIndex(targetX_1, targetY_1, targetWidth);
             size_t idx2 = CalculateIndex(targetX_2, targetY_1, targetWidth);
-            size_t idx3 = CalculateIndex(targetX_1, targetY_2, targetWidth);
-            size_t idx4 = CalculateIndex(targetX_2, targetY_2, targetWidth);
 
             targetBuffer[idx1] = pix;
             targetBuffer[idx2] = pix;
-            targetBuffer[idx3] = pix;
-            targetBuffer[idx4] = pix;
         }
+
+        size_t from = CalculateIndex(0, targetY_1, targetWidth);
+        size_t to = CalculateIndex(0, targetY_1 + 1, targetWidth);
+
+        Pixel* src = targetBuffer + from;
+        Pixel* dst = targetBuffer + to;
+
+        std::memcpy((void*)(dst), (void*)(src), sizeof(Pixel) * targetWidth);
 #endif
     }
 
