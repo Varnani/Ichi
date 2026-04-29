@@ -16,16 +16,26 @@ if(USE_SIMD)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE SIMD_ON)
 endif()
 
-# output debug info even with release builds
+# multithreading option
+option(USE_MULTITHREADING "Enable multithreaded codepath" ON)
+if(USE_MULTITHREADING)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE MULTITHREADING_ON)
+endif()
+
+# compiler arguments
 if(CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
+    # output debug info even with release builds
     target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /Zi)
     target_link_options(${CMAKE_PROJECT_NAME} PRIVATE /DEBUG)
+
     if(USE_SIMD)
             target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /arch:AVX2)
     endif()
 
 else()
+    # output debug info even with release builds
     target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -g)
+
     if(USE_SIMD)
             target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -mavx2)
     endif()

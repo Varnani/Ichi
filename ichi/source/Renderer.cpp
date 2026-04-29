@@ -13,6 +13,14 @@
 #include <immintrin.h>
 #endif
 
+#ifdef MULTITHREADING_ON
+#include <vector>
+#include <execution>
+#include <algorithm>
+
+static std::vector<size_t> s_rowIterator{};
+#endif
+
 static size_t CalculateIndex(size_t x, size_t y, uint32_t width)
 {
     return x + (y * width);
@@ -43,6 +51,14 @@ void Renderer::Resize(const uint32_t w, const uint32_t h)
     height = h;
 
     m_buffer.resize(width * height);
+
+#ifdef MULTITHREADING_ON
+    s_rowIterator.resize(height);
+    for (size_t i = 0; i < height; i++)
+    {
+        s_rowIterator[i] = i;
+    }
+#endif
 
     Profiler::Get().EndMarker();
 }
@@ -144,25 +160,29 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
     }
 
     assert(targetWidth == 2 * width && targetHeight == 2 * height && "target buffer must be double the internal buffer for hidpi.");
-
-    Pixel* sourceBuffer = m_buffer.data();
-    Pixel* targetBuffer = reinterpret_cast<Pixel*>(target);
-
 #ifdef SIMD_ON
     assert(width % 8 == 0 && "width must be divisible by 8 for aligned simd access!");
 #endif
 
+    Pixel* sourceBuffer = m_buffer.data();
+    Pixel* targetBuffer = reinterpret_cast<Pixel*>(target);
+    uint32_t sourceWidth = width;
+
+#ifdef MULTITHREADING_ON 
+    std::for_each(std::execution::par_unseq, s_rowIterator.begin(), s_rowIterator.end(), [sourceWidth, targetWidth, sourceBuffer, targetBuffer](size_t y) {
+#else
     for (size_t y = 0; y < height; y++)
     {
+#endif
         size_t targetY_1 = y * 2;
         size_t targetY_2 = targetY_1 + 1;
 
 #ifdef SIMD_ON
-        size_t fromIndex = CalculateIndex(0, y, width);
+        size_t fromIndex = CalculateIndex(0, y, sourceWidth);
         size_t toIndex = CalculateIndex(0, targetY_1, targetWidth);
 
         constexpr int simdElements = 4;
-        for (size_t x = 0; x < width; x += simdElements)
+        for (size_t x = 0; x < sourceWidth; x += simdElements)
         {
             __m128i* source = reinterpret_cast<__m128i*>(sourceBuffer + fromIndex);
             __m256i* target = reinterpret_cast<__m256i*>(targetBuffer + toIndex);
@@ -177,10 +197,10 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
             toIndex += simdElements * 2;
         }
 
-        fromIndex = CalculateIndex(0, y, width);
+        fromIndex = CalculateIndex(0, y, sourceWidth);
         toIndex = CalculateIndex(0, targetY_2, targetWidth);
 
-        for (size_t x = 0; x < width; x += simdElements)
+        for (size_t x = 0; x < sourceWidth; x += simdElements)
         {
             __m128i* source = reinterpret_cast<__m128i*>(sourceBuffer + fromIndex);
             __m256i* targetBelow = reinterpret_cast<__m256i*>(targetBuffer + toIndex);
@@ -196,9 +216,9 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
         }
 
 #else
-        for (size_t x = 0; x < width; x++)
+        for (size_t x = 0; x < sourceWidth; x++)
         {
-            size_t index = CalculateIndex(x, y, width);
+            size_t index = CalculateIndex(x, y, sourceWidth);
             Pixel pix = sourceBuffer[index];
 
             size_t targetX_1 = x * 2;
@@ -219,7 +239,10 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
 
         std::memcpy((void*)(dst), (void*)(src), sizeof(Pixel) * targetWidth);
 #endif
-    }
+    }        
+#ifdef MULTITHREADING_ON
+        );
+#endif
 
 #ifdef SIMD_ON
     // make sure streamed writes are visible after simd ops
