@@ -78,12 +78,27 @@ int AppEntry()
         profiler.BeginFrame();
 
         input.UpdateKeyStates();
-        RGFW_pollEvents();
 
-        coroutines.ProcessCoroutines();
-        game.Update();
+        profiler.BeginMarker("RGFW_pollEvents");
+        {
+            RGFW_pollEvents();
+        }
+        profiler.EndMarker();
 
-        RGFW_window_getSize(window, &width, &height);
+
+        profiler.BeginMarker("Game Updates");
+        {
+            coroutines.ProcessCoroutines();
+            game.Update();
+        }
+        profiler.EndMarker();
+
+
+        profiler.BeginMarker("RGFW_window_getSize");
+        {
+            RGFW_window_getSize(window, &width, &height);
+        }
+        profiler.EndMarker();
 
 #ifdef SIMD_ON
         // we need each row to begin at 32-byte alignment for simd
@@ -93,7 +108,11 @@ int AppEntry()
         width += (8 - width % 8) % 8;
 #endif
 
-        surface = GetSurface(monitor, width, height);
+        profiler.BeginMarker("GetSurface");
+        {
+            surface = GetSurface(monitor, width, height);
+        }
+        profiler.EndMarker();
 
         profiler.BeginMarker("Rendering");
         {
@@ -113,7 +132,11 @@ int AppEntry()
         }
         profiler.EndMarker();
 
-        RGFW_window_setName(window, std::format("Ichi | {:>3}fps {:>8.4f}ms", int(1.0f / time.deltaTime), time.deltaTime * 1000).c_str());
+        profiler.BeginMarker("RGFW_window_setName");
+        {
+            RGFW_window_setName(window, std::format("Ichi | {:>3}fps {:>8.4f}ms", int(1.0f / time.deltaTime), time.deltaTime * 1000).c_str());
+        }
+        profiler.EndMarker();
 
         profiler.EndFrame();
 
