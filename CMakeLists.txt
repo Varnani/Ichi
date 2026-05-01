@@ -24,7 +24,11 @@ endif()
 # multithreading option
 option(USE_MULTITHREADING "Enable multithreaded codepath" ON)
 if(USE_MULTITHREADING)
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE MULTITHREADING_ON)
+    if(APPLE)
+        message(WARNING "Can't use multithreading on Apple.")
+    else()
+        target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE MULTITHREADING_ON)
+    endif()
 endif()
 
 # whole-program optimizations
