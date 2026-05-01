@@ -9,7 +9,7 @@
 #include "../include/Renderer.hpp"
 #include "../include/Sprite.hpp"
 
-#ifdef SIMD_ON
+#ifdef AVX
 #include <immintrin.h>
 #endif
 
@@ -168,7 +168,7 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
     Pixel* targetBuffer = reinterpret_cast<Pixel*>(target);
     uint32_t sourceWidth = width;
 
-#ifdef MULTITHREADING_ON 
+#ifdef MULTITHREADING_ON
     std::for_each(std::execution::par_unseq, s_rowIterator.begin(), s_rowIterator.end(), [sourceWidth, targetWidth, sourceBuffer, targetBuffer](size_t y) {
 #else
     for (size_t y = 0; y < height; y++)
@@ -243,7 +243,7 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
 
         std::memcpy((void*)(dst), (void*)(src), sizeof(Pixel) * targetWidth);
 #endif
-    }        
+    }
 #ifdef MULTITHREADING_ON
         );
 #endif
