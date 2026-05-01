@@ -14,12 +14,24 @@ target_compile_features(${CMAKE_PROJECT_NAME} PRIVATE cxx_std_20)
 option(USE_SIMD "Use SIMD intrinsics" ON)
 if(USE_SIMD)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE SIMD_ON)
+    if (APPLE)
+        target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE NEON)
+    else()
+        target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE AVX)
+    endif()
 endif()
 
 # multithreading option
 option(USE_MULTITHREADING "Enable multithreaded codepath" ON)
 if(USE_MULTITHREADING)
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE MULTITHREADING_ON)
+endif()
+
+# whole-program optimizations
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported)
+if(ipo_supported)
+    set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
 endif()
 
 # compiler arguments
@@ -37,7 +49,9 @@ else()
     target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -g)
 
     if(USE_SIMD)
+        if(NOT APPLE)
             target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -mavx2)
+        endif()
     endif()
 endif()
 

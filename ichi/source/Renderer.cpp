@@ -184,6 +184,7 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
         constexpr int simdElements = 4;
         for (size_t x = 0; x < sourceWidth; x += simdElements)
         {
+#ifdef AVX
             __m128i* source = reinterpret_cast<__m128i*>(sourceBuffer + fromIndex);
             __m256i* target = reinterpret_cast<__m256i*>(targetBuffer + toIndex);
 
@@ -192,6 +193,7 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
             __m128i bbaa = _mm_unpackhi_epi32(pix, pix);
             __m256i interleaved = _mm256_set_m128(bbaa, rrgg);
             _mm256_stream_si256(target, interleaved);
+#endif
 
             fromIndex += simdElements;
             toIndex += simdElements * 2;
@@ -202,6 +204,7 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
 
         for (size_t x = 0; x < sourceWidth; x += simdElements)
         {
+#ifdef AVX
             __m128i* source = reinterpret_cast<__m128i*>(sourceBuffer + fromIndex);
             __m256i* targetBelow = reinterpret_cast<__m256i*>(targetBuffer + toIndex);
 
@@ -210,6 +213,7 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
             __m128i bbaa = _mm_unpackhi_epi32(pix, pix);
             __m256i interleaved = _mm256_set_m128(bbaa, rrgg);
             _mm256_stream_si256(targetBelow, interleaved);
+#endif
 
             fromIndex += simdElements;
             toIndex += simdElements * 2;
@@ -244,7 +248,7 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
         );
 #endif
 
-#ifdef SIMD_ON
+#ifdef AVX
     // make sure streamed writes are visible after simd ops
     _mm_sfence();
 #endif
