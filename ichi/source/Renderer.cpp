@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cstdint>
+#include <memory>
 #include <string.h>
 
 #include <glm/glm.hpp>
@@ -11,6 +12,10 @@
 
 #ifdef AVX
 #include <immintrin.h>
+#endif
+
+#ifdef NEON
+#include <arm_neon.h>
 #endif
 
 #ifdef MULTITHREADING_ON
@@ -160,13 +165,16 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
     }
 
     assert(targetWidth == 2 * width && targetHeight == 2 * height && "target buffer must be double the internal buffer for hidpi.");
+
+    Pixel* sourceBuffer = std::assume_aligned<16>(m_buffer.data());
+    Pixel* targetBuffer = std::assume_aligned<16>(reinterpret_cast<Pixel*>(target));
+    uint32_t sourceWidth = width;
+
 #ifdef SIMD_ON
     assert(width % 8 == 0 && "width must be divisible by 8 for aligned simd access!");
+    assert(reinterpret_cast<uintptr_t>(sourceBuffer) % 16 == 0 && "source is not 16 byte aligned!");
+    assert(reinterpret_cast<uintptr_t>(targetBuffer) % 16 == 0 && "target is not 16 byte aligned!");
 #endif
-
-    Pixel* sourceBuffer = m_buffer.data();
-    Pixel* targetBuffer = reinterpret_cast<Pixel*>(target);
-    uint32_t sourceWidth = width;
 
 #ifdef MULTITHREADING_ON
     std::for_each(std::execution::par_unseq, s_rowIterator.begin(), s_rowIterator.end(), [sourceWidth, targetWidth, sourceBuffer, targetBuffer](size_t y) {
@@ -195,6 +203,19 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
             _mm256_stream_si256(target, interleaved);
 #endif
 
+#ifdef NEON
+            uint32_t* source = reinterpret_cast<uint32_t*>(sourceBuffer + fromIndex);
+            uint32_t* target = reinterpret_cast<uint32_t*>(targetBuffer + toIndex);
+
+            uint32x4_t pix = vld1q_u32(source);
+
+            uint32x4_t rrgg = vzip1q_u32(pix, pix);
+            uint32x4_t bbaa = vzip2q_u32(pix, pix);
+
+            vst1q_u32(target, rrgg);
+            vst1q_u32(target + 4, bbaa);
+#endif
+
             fromIndex += simdElements;
             toIndex += simdElements * 2;
         }
@@ -213,6 +234,19 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
             __m128i bbaa = _mm_unpackhi_epi32(pix, pix);
             __m256i interleaved = _mm256_set_m128(bbaa, rrgg);
             _mm256_stream_si256(targetBelow, interleaved);
+#endif
+
+#ifdef NEON
+            uint32_t* source = reinterpret_cast<uint32_t*>(sourceBuffer + fromIndex);
+            uint32_t* targetBelow = reinterpret_cast<uint32_t*>(targetBuffer + toIndex);
+
+            uint32x4_t pix = vld1q_u32(source);
+
+            uint32x4_t rrgg = vzip1q_u32(pix, pix);
+            uint32x4_t bbaa = vzip2q_u32(pix, pix);
+
+            vst1q_u32(targetBelow, rrgg);
+            vst1q_u32(targetBelow + 4, bbaa);
 #endif
 
             fromIndex += simdElements;
