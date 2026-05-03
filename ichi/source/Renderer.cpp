@@ -166,14 +166,14 @@ void Renderer::Present(uint8_t* target, const uint32_t targetWidth, const uint32
 
     assert(targetWidth == 2 * width && targetHeight == 2 * height && "target buffer must be double the internal buffer for hidpi.");
 
-    Pixel* sourceBuffer = std::assume_aligned<16>(m_buffer.data());
-    Pixel* targetBuffer = std::assume_aligned<16>(reinterpret_cast<Pixel*>(target));
+    Pixel* sourceBuffer = std::assume_aligned<32>(m_buffer.data());
+    Pixel* targetBuffer = std::assume_aligned<32>(reinterpret_cast<Pixel*>(target));
     uint32_t sourceWidth = width;
 
 #ifdef SIMD_ON
     assert(width % 8 == 0 && "width must be divisible by 8 for aligned simd access!");
-    assert(reinterpret_cast<uintptr_t>(sourceBuffer) % 16 == 0 && "source is not 16 byte aligned!");
-    assert(reinterpret_cast<uintptr_t>(targetBuffer) % 16 == 0 && "target is not 16 byte aligned!");
+    assert(reinterpret_cast<uintptr_t>(sourceBuffer) % 32 == 0 && "source is not 32 byte aligned!");
+    assert(reinterpret_cast<uintptr_t>(targetBuffer) % 32 == 0 && "target is not 32 byte aligned!");
 #endif
 
 #ifdef MULTITHREADING_ON
